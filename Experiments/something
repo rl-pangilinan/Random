@@ -1,0 +1,21 @@
+#Ubuntu 20
+sudo apt install libsdl2-dev
+sudo apt install build-essential
+sudo apt install git
+git clone https://github.com/rockytriton/LLD_gbemu
+cd LLD_gbemu/
+ls
+cd part1/
+mkdir build
+cd build
+sudo apt install cmake
+cmake ..
+sudo apt install libsdl2-ttf-dev
+sudo apt install check
+(install visual studio code ubuntu)
+cd ~/Downloads/
+sudo dpkg -i code_1.60.0-1630494279_amd64.deb
+cd ..
+cd .. 
+code .
+
