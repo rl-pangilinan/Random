@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .chessboard {
+        display: grid;
+        grid-template-columns: repeat(8, 50px);
+      }
+
+      .square {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        background-color: white;
+        cursor: pointer;
+      }
+
+      .square.black {
+        background-color: gray;
+      }
+
+      .selected {
+        border: 2px solid yellow;
+      }
+
+      .dragging {
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chessboard" id="chessboard"></div>
+
+    <script>
+      const chessboard = document.getElementById('chessboard');
+      const board = [];
+      let selectedPiece = null;
+      let currentPlayer = 'white';
+      let enPassantTarget = null;
+      let whiteKingMoved = false;
+      let blackKingMoved = false;
+      let whiteLeftRookMoved = false;
+      let whiteRightRookMoved = false;
+      let blackLeftRookMoved = false;
+      let blackRightRookMoved = false;
+      let whiteKingSquare = { row: 7, col: 4 };
+      let blackKingSquare = { row: 0, col: 4 };
+
+      // Variables to track the dragging state
+      let isDragging = false;
+      let selectedSquare = null;
+      let initialX, initialY;
+
+      function createChessboard() {
+        let isBlack = false;
+
+        for (let row = 0; row < 8; row++) {
+          for (let col = 0; col < 8; col++) {
+            const square = document.createElement('div');
+            square.className = `square ${isBlack ? 'black' : ''}`;
+            square.dataset.row = row;
+            square.dataset.col = col;
+
+            square.addEventListener('click', handleSquareClick);
+            square.addEventListener('mousedown', handlePieceDragStart);
+            square.addEventListener('mousemove', handlePieceDrag);
+            square.addEventListener('mouseup', handlePieceDrop);
+
+            board.push(square);
+            chessboard.appendChild(square);
+            isBlack = !isBlack;
+          }
+          isBlack = !isBlack;
+        }
+      }
+
+      function setupPieces() {
+        const startingPosition = [
+          'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
+          'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+          '', '', '', '', '', '', '', '',
+          '', '', '', '', '', '', '', '',
+          '', '', '', '', '', '', '', '',
+          '', '', '', '', '', '', '', '',
+          'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+          'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+        ];
+
+        board.forEach((square, index) => {
+          square.textContent = startingPosition[index];
+        });
+      }
+
+      createChessboard();
+      setupPieces();
+
+      function handleSquareClick(event) {
+        const square = event.target;
+        const { row, col } = square.dataset;
+        const piece = square.textContent;
+
+        if (isDragging) return;
+
+        if (selectedPiece) {
+          const { row: selectedRow, col: selectedCol } = selectedPiece;
+          if (isValidMove(selectedRow, selectedCol, row, col, piece)) {
+            movePiece(selectedPiece, row, col);
+            selectedPiece = null;
+            currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+
+            // Check if the king is in check
+            if (isInCheck(currentPlayer)) {
+              alert(`Check! ${currentPlayer} must move their king.`);
+            }
+          } else {
+            alert('Invalid move. Try again.');
+          }
+        } else {
+          if (piece !== '' && piece[0] === currentPlayer[0]) {
+            selectedPiece = { row, col };
+          }
+        }
+      }
+
+      function isValidMove(oldRow, oldCol, newRow, newCol, piece) {
+        // Implement your logic for valid moves here
+        // This is a basic example that allows any move for now
+        return true;
+      }
+
+      function movePiece(piece, newRow, newCol) {
+        const { row, col } = piece;
+        const sourceSquare = board.find(
+          (square) => square.dataset.row === row && square.dataset.col === col
+        );
+        const targetSquare = board.find(
+          (square) => square.dataset.row === newRow && square.dataset.col === newCol
+        );
+
+        if (sourceSquare && targetSquare) {
+          targetSquare.textContent = sourceSquare.textContent;
+          sourceSquare.textContent = '';
+
+          // Update the king's position if it's moved
+          if (sourceSquare === board[whiteKingSquare.row * 8 + whiteKingSquare.col]) {
+            whiteKingSquare.row = newRow;
+            whiteKingSquare.col = newCol;
+          }
+          if (sourceSquare === board[blackKingSquare.row * 8 + blackKingSquare.col]) {
+            blackKingSquare.row = newRow;
+            blackKingSquare.col = newCol;
+          }
+        }
+      }
+
+      function isInCheck(player) {
+        // Implement logic to check if the player's king is in check
+        const kingSquare = player === 'white' ? whiteKingSquare : blackKingSquare;
+
+        // Check for enemy pieces attacking the king's square
+        for (let square of board) {
+          const { row, col } = square.dataset;
+          const piece = square.textContent;
+          if (piece && piece[0] !== player[0] && isValidMove(row, col, kingSquare.row, kingSquare.col, piece)) {
+            square.classList.add('king-check');
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      // Drag-and-drop logic
+
+      function handlePieceDragStart(event) {
+        isDragging = true;
+        selectedSquare = event.target;
+        selectedSquare.classList.add('dragging');
+        initialX = event.clientX;
+        initialY = event.clientY;
+        event.dataTransfer.setDragImage(new Image(), 0, 0);
+      }
+
+      function handlePieceDrag(event) {
+        if (isDragging) {
+          const offsetX = event.clientX - initialX;
+          const offsetY = event.clientY - initialY;
+          selectedSquare.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        }
+      }
+
+      function handlePieceDrop(event) {
+        if (isDragging) {
+          const offsetX = event.clientX - initialX;
+          const offsetY = event.clientY - initialY;
+          selectedSquare.style.transform = `translate(0px, 0px)`;
+          selectedSquare.classList.remove('dragging');
+
+          // Determine the target square based on the drop position
+          const dropX = event.clientX - chessboard.getBoundingClientRect().left;
+          const dropY = event.clientY - chessboard.getBoundingClientRect().top;
+
+          for (let square of board) {
+            const rect = square.getBoundingClientRect();
+            if (
+              dropX >= rect.left && dropX <= rect.right &&
+              dropY >= rect.top && dropY <= rect.bottom
+            ) {
+              const { row, col } = square.dataset;
+              const piece = square.textContent;
+
+              if (isValidMove(
+                selectedSquare.dataset.row,
+                selectedSquare.dataset.col,
+                row,
+                col,
+                piece
+              )) {
+                movePiece(
+                  { row: selectedSquare.dataset.row, col: selectedSquare.dataset.col },
+                  row,
+                  col
+                );
+                currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+
+                // Check if the king is in check
+                if (isInCheck(currentPlayer)) {
+                  alert(`Check! ${currentPlayer} must move their king.`);
+                }
+              } else {
+                alert('Invalid move. Try again.');
+              }
+
+              break;
+            }
+          }
+
+          isDragging = false;
+          selectedSquare = null;
+        }
+      }
+    </script>
+  </body>
+</html>

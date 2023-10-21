@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Stockfish Chess</title>
+  </head>
+  <body>
+    <div id="board" style="width: 400px;"></div>
+    <button id="calculate-button">Calculate Best Move</button>
+  </body>
+  <script src="chess.js"></script>
+
+// stockfish.js
+
+const stockfish = new Worker('stockfish.js'); // Replace 'stockfish.js' with the actual path to Stockfish Web Worker
+
+stockfish.onmessage = function (event) {
+  console.log('Stockfish says: ' + event.data);
+};
+
+function sendPositionToFEN(fen) {
+  stockfish.postMessage('position fen ' + fen);
+}
+
+function calculateBestMove() {
+  stockfish.postMessage('go infinite');
+}
+
+// chessboard interaction
+const board = ChessBoard('board', 'start');
+
+document.getElementById('calculate-button').addEventListener('click', () => {
+  sendPositionToFEN(board.fen());
+  calculateBestMove();
+});
+
+
+  <script src="stockfish.js"></script>
+</html>
