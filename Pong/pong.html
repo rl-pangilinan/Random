@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2-Player Pong Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pong" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("pong");
+        const ctx = canvas.getContext("2d");
+
+        // Constants
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
+        const BALL_SPEED = 5;
+        const PADDLE_SPEED = 7;
+        const WHITE = "#ffffff";
+        const GREEN = "#00ff00";
+
+        // Initialize paddles and ball
+        const ball = { x: WIDTH / 2, y: HEIGHT / 2, radius: 15, speedX: BALL_SPEED, speedY: BALL_SPEED };
+        const player1 = { x: WIDTH - 20, y: HEIGHT / 2 - 60, width: 10, height: 120 };
+        const player2 = { x: 10, y: HEIGHT / 2 - 60, width: 10, height: 120 };
+
+        // Initialize scores
+        let player1Score = 0;
+        let player2Score = 0;
+
+        function drawPaddle(x, y, width, height) {
+            ctx.fillStyle = WHITE;
+            ctx.fillRect(x, y, width, height);
+        }
+
+        function drawBall(x, y, radius) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = GREEN;
+            ctx.fill();
+        }
+
+        function drawScores() {
+            ctx.fillStyle = WHITE;
+            ctx.font = "36px Arial";
+            ctx.fillText(player1Score, WIDTH - 60, 30);
+            ctx.fillText(player2Score, 20, 30);
+        }
+
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            // Player 1 controls
+            if (keys["ArrowDown"] && player1.y < HEIGHT - player1.height) {
+                player1.y += PADDLE_SPEED;
+            }
+            if (keys["ArrowUp"] && player1.y > 0) {
+                player1.y -= PADDLE_SPEED;
+            }
+
+            // Player 2 controls
+            if (keys["s"] && player2.y < HEIGHT - player2.height) {
+                player2.y += PADDLE_SPEED;
+            }
+            if (keys["w"] && player2.y > 0) {
+                player2.y -= PADDLE_SPEED;
+            }
+
+            // Ball movement
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // Ball collisions with top and bottom walls
+            if (ball.y - ball.radius <= 0 || ball.y + ball.radius >= HEIGHT) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // Ball passes behind paddles
+            if (ball.x - ball.radius <= player2.x + player2.width) {
+                if (ball.y >= player2.y && ball.y <= player2.y + player2.height) {
+                    ball.speedX = -ball.speedX;
+                } else {
+                    player1Score++;
+                    resetBall();
+                }
+            }
+
+            if (ball.x + ball.radius >= player1.x) {
+                if (ball.y >= player1.y && ball.y <= player1.y + player1.height) {
+                    ball.speedX = -ball.speedX;
+                } else {
+                    player2Score++;
+                    resetBall();
+                }
+            }
+
+            // Draw everything
+            drawPaddle(player1.x, player1.y, player1.width, player1.height);
+            drawPaddle(player2.x, player2.y, player2.width, player2.height);
+            drawBall(ball.x, ball.y, ball.radius);
+            drawScores();
+        }
+
+        function resetBall() {
+            ball.x = WIDTH / 2;
+            ball.y = HEIGHT / 2;
+            ball.speedX = -ball.speedX;
+            ball.speedY = BALL_SPEED;
+        }
+
+        // Keyboard input handling
+        const keys = {};
+        window.addEventListener("keydown", function (e) {
+            keys[e.key] = true;
+        });
+        window.addEventListener("keyup", function (e) {
+            keys[e.key] = false;
+        });
+
+        // Game loop
+        function gameLoop() {
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
